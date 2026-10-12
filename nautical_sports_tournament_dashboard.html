@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regatta Collegiate Cup - Sports Tournament Dashboard</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Cinzel for Nautical Collegiate feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            nautical: ['"Cinzel"', 'serif'],
+          },
+          colors: {
+            maritime: {
+              navy: '#0B192C',
+              navyDark: '#060D17',
+              ocean: '#1E3E62',
+              brass: '#E29578',
+              gold: '#F4B251',
+              foam: '#EDF4F2',
+              cardDark: 'rgba(15, 23, 42, 0.75)'
+            },
+            house: {
+              main: '#1E40AF',       /* Royal Navy */
+              mizzen: '#B91C1C',     /* Crimson Sail */
+              spanker: '#047857',    /* Emerald Anchor */
+              foretop: '#D97706'     /* Amber Masthead */
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* Custom scrollbars and glowing badges */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e3e62;
+      border-radius: 4px;
+    }
+    .compass-bg {
+      background-image: radial-gradient(circle at 50% 10%, rgba(30, 62, 98, 0.35) 0%, transparent 60%);
+    }
+    .badge-glow-main { box-shadow: 0 0 15px rgba(30, 64, 175, 0.3); }
+    .badge-glow-mizzen { box-shadow: 0 0 15px rgba(185, 28, 28, 0.3); }
+    .badge-glow-spanker { box-shadow: 0 0 15px rgba(4, 120, 87, 0.3); }
+    .badge-glow-foretop { box-shadow: 0 0 15px rgba(217, 119, 6, 0.3); }
+  </style>
+</head>
+<body class="bg-[#070E18] text-slate-100 min-h-screen font-sans selection:bg-amber-500 selection:text-black">
+
+  <header class="border-b border-slate-800/80 bg-[#091322]/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <!-- Logo and Brand Title -->
+        <div class="flex items-center space-x-3.5">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/30">
+            <i data-lucide="anchor" class="w-7 h-7 text-white stroke-[2.2]"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-nautical text-xl sm:text-2xl font-bold tracking-wider text-slate-100">ADMIRAL CUP</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold tracking-wide uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Annual Games</span>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">Cadet Sports Division • Houses: Main, Mizzen, Spanker, Fore Top</p>
+          </div>
+        </div>
+
+        <!-- Quick Action / Status & Reset Button -->
+        <div class="flex items-center gap-3">
+          <button id="btn-quick-admin" onclick="openAdminModal()" class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition-all text-xs font-semibold shadow">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-amber-400"></i>
+            <span class="hidden sm:inline">Add / Manage Match</span>
+          </button>
+          <button onclick="resetTournamentData()" title="Reset to initial tournament data" class="p-2 rounded-lg bg-slate-800/60 hover:bg-red-500/20 hover:text-red-400 text-slate-400 border border-slate-800 transition">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- House Quick Ticker Strip -->
+    <div class="grid grid-cols-4 border-t border-slate-800/60 text-xs py-2 px-2 sm:px-8 bg-[#060c16]/80 backdrop-blur font-medium">
+      <div class="flex items-center justify-center gap-2 border-r border-slate-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+        <span class="font-nautical text-blue-400 uppercase tracking-wider font-bold">MAIN</span>
+        <span id="ticker-main-pts" class="text-slate-300 font-mono hidden sm:inline">0 pts</span>
+      </div>
+      <div class="flex items-center justify-center gap-2 border-r border-slate-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+        <span class="font-nautical text-red-400 uppercase tracking-wider font-bold">MIZZEN</span>
+        <span id="ticker-mizzen-pts" class="text-slate-300 font-mono hidden sm:inline">0 pts</span>
+      </div>
+      <div class="flex items-center justify-center gap-2 border-r border-slate-800">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-nautical text-emerald-400 uppercase tracking-wider font-bold">SPANKER</span>
+        <span id="ticker-spanker-pts" class="text-slate-300 font-mono hidden sm:inline">0 pts</span>
+      </div>
+      <div class="flex items-center justify-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+        <span class="font-nautical text-amber-400 uppercase tracking-wider font-bold">FORE TOP</span>
+        <span id="ticker-foretop-pts" class="text-slate-300 font-mono hidden sm:inline">0 pts</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 compass-bg">
+
+    <!-- Active Spotlight / Live In-Play Match Section -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-3 w-3 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+          <h2 class="font-nautical text-lg sm:text-xl font-bold tracking-wide text-slate-100 uppercase">Live Flagship Match</h2>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <i data-lucide="radio" class="w-4 h-4 text-red-400"></i>
+          <span>Live Scorer & Quick Tagger</span>
+        </div>
+      </div>
+
+      <!-- Live Match Interactive Card -->
+      <div id="live-match-container" class="rounded-2xl border border-slate-700/80 bg-slate-900/80 backdrop-blur-xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- House Standings Leaderboard (2 Columns) -->
+      <section class="lg:col-span-2 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>
+            <h2 class="font-nautical text-lg sm:text-xl font-bold tracking-wide text-slate-100 uppercase">Division Leaderboard</h2>
+          </div>
+          <span class="text-xs text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">Win: 3pts | Tie: 1pt | Loss: 0pts</span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800 bg-[#0A1424]/90 shadow-xl">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-800">
+              <tr>
+                <th scope="col" class="py-3.5 px-4 text-center">Rank</th>
+                <th scope="col" class="py-3.5 px-4">House / Mast</th>
+                <th scope="col" class="py-3.5 px-3 text-center">P</th>
+                <th scope="col" class="py-3.5 px-3 text-center text-emerald-400">W</th>
+                <th scope="col" class="py-3.5 px-3 text-center text-slate-400">T</th>
+                <th scope="col" class="py-3.5 px-3 text-center text-rose-400">L</th>
+                <th scope="col" class="py-3.5 px-3 text-center">Diff / NRR</th>
+                <th scope="col" class="py-3.5 px-4 text-right font-bold text-amber-400">Total Pts</th>
+              </tr>
+            </thead>
+            <tbody id="standings-table-body" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="award" class="w-5 h-5 text-amber-400"></i>
+            <h2 class="font-nautical text-lg sm:text-xl font-bold tracking-wide text-slate-100 uppercase">Medal Tally</h2>
+          </div>
+          <span class="text-xs text-slate-400">Podium Finishes</span>
+        </div>
+
+        <div class="rounded-xl border border-slate-800 bg-[#0A1424]/90 p-5 shadow-xl space-y-4" id="medal-tally-container">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+    </div>
+
+    <section class="space-y-4 pt-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-nautical text-lg sm:text-xl font-bold tracking-wide text-slate-100 uppercase flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-amber-400"></i>
+            Regatta Matches & Fixtures
+          </h2>
+          <p class="text-xs text-slate-400">Filter matches across disciplines and schedules</p>
+        </div>
+
+        <!-- Sport & Status Filters -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Status buttons -->
+          <div class="inline-flex rounded-lg bg-slate-900 border border-slate-800 p-1">
+            <button onclick="setScheduleStatusFilter('all')" id="filter-status-all" class="filter-status-btn px-3 py-1 rounded text-xs font-semibold bg-amber-500 text-slate-950 transition">All</button>
+            <button onclick="setScheduleStatusFilter('live')" id="filter-status-live" class="filter-status-btn px-3 py-1 rounded text-xs font-semibold text-slate-300 hover:text-white transition">Live</button>
+            <button onclick="setScheduleStatusFilter('scheduled')" id="filter-status-scheduled" class="filter-status-btn px-3 py-1 rounded text-xs font-semibold text-slate-300 hover:text-white transition">Upcoming</button>
+            <button onclick="setScheduleStatusFilter('completed')" id="filter-status-completed" class="filter-status-btn px-3 py-1 rounded text-xs font-semibold text-slate-300 hover:text-white transition">Completed</button>
+          </div>
+
+          <!-- Sport Selector Dropdown -->
+          <div class="relative">
+            <select id="sport-filter-select" onchange="setSportFilter(this.value)" class="bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg focus:ring-amber-500 focus:border-amber-500 block px-3 py-2 pr-8 cursor-pointer">
+              <option value="all">All Sports</option>
+              <option value="Cricket">Cricket</option>
+              <option value="Football">Football / Futsal</option>
+              <option value="Volleyball">Volleyball</option>
+              <option value="Basketball">Basketball</option>
+              <option value="Tug of War">Tug of War</option>
+              <option value="Carrom">Carrom</option>
+              <option value="Chess">Chess</option>
+              <option value="Table Tennis">Table Tennis</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Match Cards Grid -->
+      <div id="matches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered matches -->
+      </div>
+    </section>
+
+  </main>
+
+  <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+      
+      <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="compass" class="w-5 h-5 text-amber-400"></i>
+          <h3 id="modal-title" class="font-nautical text-lg font-bold text-white uppercase tracking-wider">Tournament Match Manager</h3>
+        </div>
+        <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="match-form" onsubmit="handleSaveMatch(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="form-match-id" value="">
+
+        <!-- Sport & Venue -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Sport Discipline</label>
+            <select id="form-sport" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+              <option value="Cricket">Cricket</option>
+              <option value="Football">Football / Futsal</option>
+              <option value="Volleyball">Volleyball</option>
+              <option value="Basketball">Basketball</option>
+              <option value="Tug of War">Tug of War</option>
+              <option value="Carrom">Carrom</option>
+              <option value="Chess">Chess</option>
+              <option value="Table Tennis">Table Tennis</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Status</label>
+            <select id="form-status" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+              <option value="scheduled">Upcoming (Scheduled)</option>
+              <option value="live">Live Now</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Venue & Time Details -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Venue / Arena</label>
+            <input type="text" id="form-venue" placeholder="e.g. Oval Ground, Court 2" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Schedule / Time</label>
+            <input type="text" id="form-time" placeholder="e.g. Today 3:30 PM" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+
+        <!-- Teams Selection -->
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+          <div>
+            <label class="block font-semibold text-blue-400 mb-1">Team 1 (House)</label>
+            <select id="form-team1" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-400">
+              <option value="Main">Main House</option>
+              <option value="Mizzen">Mizzen House</option>
+              <option value="Spanker">Spanker House</option>
+              <option value="Fore Top">Fore Top House</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-rose-400 mb-1">Team 2 (House)</label>
+            <select id="form-team2" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-rose-400">
+              <option value="Mizzen">Mizzen House</option>
+              <option value="Main">Main House</option>
+              <option value="Spanker">Spanker House</option>
+              <option value="Fore Top">Fore Top House</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Scores & Stats -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Team 1 Score / Sets / Runs</label>
+            <input type="text" id="form-score1" placeholder="e.g. 142/6 (18.2 ov) or 2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Team 2 Score / Sets / Runs</label>
+            <input type="text" id="form-score2" placeholder="e.g. 138/9 (20.0 ov) or 1" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+
+        <!-- Match Commentary / Summary -->
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Status Note / Commentary</label>
+          <input type="text" id="form-summary" placeholder="e.g. Fore Top needs 5 runs in 4 balls to win" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-400">
+        </div>
+
+        <!-- Form Submit & Close Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeAdminModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Save Match</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 border border-amber-500/40 text-amber-200 px-4 py-2.5 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2.5 text-xs font-semibold">
+    <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
+    <span id="toast-msg">Action completed</span>
+  </div>
+
+  <script>
+    // Nautical House definitions & colors
+    const HOUSES = {
+      'Main': {
+        name: 'Main',
+        color: 'from-blue-700 to-indigo-900',
+        textColor: 'text-blue-400',
+        border: 'border-blue-500/40',
+        bgSolid: '#1E40AF',
+        accentBg: 'bg-blue-500/10',
+        glow: 'badge-glow-main',
+        icon: 'compass',
+        tagline: 'The Royal Mainsail'
+      },
+      'Mizzen': {
+        name: 'Mizzen',
+        color: 'from-red-700 to-rose-950',
+        textColor: 'text-red-400',
+        border: 'border-red-500/40',
+        bgSolid: '#B91C1C',
+        accentBg: 'bg-red-500/10',
+        glow: 'badge-glow-mizzen',
+        icon: 'flame',
+        tagline: 'Crimson Vanguard'
+      },
+      'Spanker': {
+        name: 'Spanker',
+        color: 'from-emerald-700 to-teal-950',
+        textColor: 'text-emerald-400',
+        border: 'border-emerald-500/40',
+        bgSolid: '#047857',
+        accentBg: 'bg-emerald-500/10',
+        glow: 'badge-glow-spanker',
+        icon: 'anchor',
+        tagline: 'Emerald Helmsmen'
+      },
+      'Fore Top': {
+        name: 'Fore Top',
+        color: 'from-amber-600 to-yellow-950',
+        textColor: 'text-amber-400',
+        border: 'border-amber-500/40',
+        bgSolid: '#D97706',
+        accentBg: 'bg-amber-500/10',
+        glow: 'badge-glow-foretop',
+        icon: 'navigation',
+        tagline: 'Masthead Sentinels'
+      }
+    };
+
+    // Initial Medals Data
+    const defaultMedals = {
+      'Main': { gold: 4, silver: 3, bronze: 2 },
+      'Mizzen': { gold: 3, silver: 4, bronze: 1 },
+      'Spanker': { gold: 3, silver: 2, bronze: 5 },
+      'Fore Top': { gold: 2, silver: 3, bronze: 4 }
+    };
+
+    // Initial Matches Data
+    const initialMatches = [
+      {
+        id: "m1",
+        sport: "Cricket",
+        team1: "Main",
+        team2: "Fore Top",
+        score1: "158/5 (20.0 ov)",
+        score2: "142/7 (18.4 ov)",
+        status: "live",
+        isFlagship: true,
+        venue: "Admiral Memorial Ground (Pitch 1)",
+        time: "Session 2 - In Progress",
+        summary: "Fore Top requires 17 runs from 8 balls. Main bowling tight lines.",
+        sportIcon: "circle-dot"
+      },
+      {
+        id: "m2",
+        sport: "Football",
+        team1: "Mizzen",
+        team2: "Spanker",
+        score1: "2",
+        score2: "1",
+        status: "completed",
+        isFlagship: false,
+        venue: "North Pier Turf",
+        time: "Final Whistle",
+        summary: "Mizzen clinched a 2-1 thriller in the 88th minute penalty kick.",
+        sportIcon: "activity"
+      },
+      {
+        id: "m3",
+        sport: "Volleyball",
+        team1: "Main",
+        team2: "Mizzen",
+        score1: "Set 2 [21 - 18]",
+        score2: "Set 1 [25 - 23]",
+        status: "live",
+        isFlagship: false,
+        venue: "Harbor Sports Complex - Court A",
+        time: "Set 2 Ongoing",
+        summary: "Main fighting back after dropping the opening set.",
+        sportIcon: "zap"
+      },
+      {
+        id: "m4",
+        sport: "Tug of War",
+        team1: "Spanker",
+        team2: "Fore Top",
+        score1: "2",
+        score2: "0",
+        status: "completed",
+        isFlagship: false,
+        venue: "Sand Beach Arena",
+        time: "Completed",
+        summary: "Spanker dominated with back-to-back rapid pulls.",
+        sportIcon: "shield"
+      },
+      {
+        id: "m5",
+        sport: "Basketball",
+        team1: "Fore Top",
+        team2: "Mizzen",
+        score1: "0",
+        score2: "0",
+        status: "scheduled",
+        isFlagship: false,
+        venue: "Indoor Gymnasium",
+        time: "Today at 4:30 PM",
+        summary: "High-stakes inter-mast basketball group clash.",
+        sportIcon: "dribbble"
+      },
+      {
+        id: "m6",
+        sport: "Chess",
+        team1: "Main",
+        team2: "Spanker",
+        score1: "1.5",
+        score2: "2.5",
+        status: "completed",
+        isFlagship: false,
+        venue: "Cadet Hall Room 3",
+        time: "Completed",
+        summary: "Spanker took the board win via blitz tie-breaker.",
+        sportIcon: "award"
+      },
+      {
+        id: "m7",
+        sport: "Carrom",
+        team1: "Fore Top",
+        team2: "Main",
+        score1: "0",
+        score2: "0",
+        status: "scheduled",
+        isFlagship: false,
+        venue: "Recreation Deck",
+        time: "Tomorrow at 10:00 AM",
+        summary: "Board doubles quarterfinals fixture.",
+        sportIcon: "disc"
+      }
+    ];
+
+    // State Variables
+    let matches = JSON.parse(localStorage.getItem('nautical_sports_matches')) || initialMatches;
+    let medals = JSON.parse(localStorage.getItem('nautical_sports_medals')) || defaultMedals;
+    let currentStatusFilter = 'all';
+    let currentSportFilter = 'all';
+
+    function computeStandings() {
+      const stats = {
+        'Main': { played: 0, won: 0, tied: 0, lost: 0, points: 0, scoreFor: 0, scoreAgainst: 0, diff: 0 },
+        'Mizzen': { played: 0, won: 0, tied: 0, lost: 0, points: 0, scoreFor: 0, scoreAgainst: 0, diff: 0 },
+        'Spanker': { played: 0, won: 0, tied: 0, lost: 0, points: 0, scoreFor: 0, scoreAgainst: 0, diff: 0 },
+        'Fore Top': { played: 0, won: 0, tied: 0, lost: 0, points: 0, scoreFor: 0, scoreAgainst: 0, diff: 0 }
+      };
+
+      matches.forEach(m => {
+        if (m.status === 'completed' && stats[m.team1] && stats[m.team2]) {
+          stats[m.team1].played += 1;
+          stats[m.team2].played += 1;
+
+          // Simple numerical parser for goals/points (extracts leading digits if applicable)
+          const num1 = parseFloat(m.score1) || 0;
+          const num2 = parseFloat(m.score2) || 0;
+
+          stats[m.team1].scoreFor += num1;
+          stats[m.team1].scoreAgainst += num2;
+          stats[m.team2].scoreFor += num2;
+          stats[m.team2].scoreAgainst += num1;
+
+          if (num1 > num2) {
+            stats[m.team1].won += 1;
+            stats[m.team1].points += 3;
+            stats[m.team2].lost += 1;
+          } else if (num2 > num1) {
+            stats[m.team2].won += 1;
+            stats[m.team2].points += 3;
+            stats[m.team1].lost += 1;
+          } else {
+            stats[m.team1].tied += 1;
+            stats[m.team2].tied += 1;
+            stats[m.team1].points += 1;
+            stats[m.team2].points += 1;
+          }
+        }
+      });
+
+      // Calculate diff and sort
+      const standingsArray = Object.keys(stats).map(houseName => {
+        const item = stats[houseName];
+        item.house = houseName;
+        item.diff = (item.scoreFor - item.scoreAgainst).toFixed(1);
+        return item;
+      });
+
+      // Sort by Points descending, then Goal/Point Diff, then Wins
+      standingsArray.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.diff !== a.diff) return b.diff - a.diff;
+        return b.won - a.won;
+      });
+
+      return standingsArray;
+    }
+
+    function renderStandings() {
+      const standings = computeStandings();
+      const tbody = document.getElementById('standings-table-body');
+      tbody.innerHTML = '';
+
+      standings.forEach((entry, index) => {
+        const hConfig = HOUSES[entry.house];
+        const rank = index + 1;
+        const rankBadge = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+        // Update header ticker values
+        const tickerId = entry.house === 'Fore Top' ? 'foretop' : entry.house.toLowerCase();
+        const tickerElem = document.getElementById(`ticker-${tickerId}-pts`);
+        if (tickerElem) tickerElem.textContent = `${entry.points} pts`;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/40 transition-colors border-b border-slate-800/60";
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center font-bold font-nautical text-slate-300">${rankBadge}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3 h-3 rounded-full" style="background-color: ${hConfig.bgSolid};"></span>
+              <div>
+                <div class="font-nautical font-bold text-sm tracking-wider ${hConfig.textColor}">${entry.house.toUpperCase()}</div>
+                <div class="text-[10px] text-slate-400">${hConfig.tagline}</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-3 text-center text-slate-300 font-mono">${entry.played}</td>
+          <td class="py-3 px-3 text-center font-mono font-bold text-emerald-400">${entry.won}</td>
+          <td class="py-3 px-3 text-center font-mono text-slate-400">${entry.tied}</td>
+          <td class="py-3 px-3 text-center font-mono text-rose-400">${entry.lost}</td>
+          <td class="py-3 px-3 text-center font-mono text-slate-300 text-xs">${entry.diff > 0 ? '+' : ''}${entry.diff}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-base text-amber-400">${entry.points}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderMedalTally() {
+      const container = document.getElementById('medal-tally-container');
+      container.innerHTML = '';
+
+      // Sort houses by total medal score (Gold=5, Silver=3, Bronze=1)
+      const sortedHouses = Object.keys(medals).sort((a, b) => {
+        const scoreA = (medals[a].gold * 5) + (medals[a].silver * 3) + medals[a].bronze;
+        const scoreB = (medals[b].gold * 5) + (medals[b].silver * 3) + medals[b].bronze;
+        return scoreB - scoreA;
+      });
+
+      sortedHouses.forEach(houseName => {
+        const item = medals[houseName];
+        const hConfig = HOUSES[houseName];
+        const total = item.gold + item.silver + item.bronze;
+
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition";
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <div class="w-3 h-3 rounded-full" style="background-color: ${hConfig.bgSolid};"></div>
+            <div>
+              <span class="font-nautical font-bold text-xs uppercase tracking-wider ${hConfig.textColor}">${houseName}</span>
+              <p class="text-[10px] text-slate-500">${total} Podiums</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <span title="Gold Medals" class="flex items-center gap-1 text-yellow-400 font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
+              🥇 ${item.gold}
+            </span>
+            <span title="Silver Medals" class="flex items-center gap-1 text-slate-300 font-bold bg-slate-400/10 px-2 py-0.5 rounded border border-slate-400/20">
+              🥈 ${item.silver}
+            </span>
+            <span title="Bronze Medals" class="flex items-center gap-1 text-amber-600 font-bold bg-amber-600/10 px-2 py-0.5 rounded border border-amber-600/20">
+              🥉 ${item.bronze}
+            </span>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderLiveCard() {
+      const container = document.getElementById('live-match-container');
+      const liveMatch = matches.find(m => m.status === 'live' && m.isFlagship) || matches.find(m => m.status === 'live') || matches[0];
+
+      if (!liveMatch) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400">No active live matches right now.</div>`;
+        return;
+      }
+
+      const h1 = HOUSES[liveMatch.team1] || HOUSES['Main'];
+      const h2 = HOUSES[liveMatch.team2] || HOUSES['Fore Top'];
+
+      container.innerHTML = `
+        <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
+          <i data-lucide="compass" class="w-64 h-64 text-amber-400"></i>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider uppercase bg-red-500/20 text-red-400 border border-red-500/40 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              ${liveMatch.status.toUpperCase()}
+            </span>
+            <span class="text-xs font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1">
+              <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+              ${liveMatch.sport}
+            </span>
+          </div>
+          <div class="text-xs text-slate-400 flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span>${liveMatch.venue}</span>
+            <span class="text-slate-600">•</span>
+            <span>${liveMatch.time}</span>
+          </div>
+        </div>
+
+        <!-- Head to Head Board -->
+        <div class="grid grid-cols-1 md:grid-cols-7 items-center gap-4 py-2">
+          
+          <!-- Team 1 Side -->
+          <div class="md:col-span-3 flex items-center gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold font-nautical text-lg shadow-md" style="background-color: ${h1.bgSolid};">
+              ${liveMatch.team1[0]}
+            </div>
+            <div class="flex-1">
+              <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">${h1.tagline}</span>
+              <h3 class="text-lg sm:text-xl font-nautical font-bold ${h1.textColor}">${liveMatch.team1.toUpperCase()}</h3>
+              <p class="text-xl sm:text-2xl font-mono font-extrabold text-white tracking-tight mt-0.5">${liveMatch.score1}</p>
+            </div>
+            <!-- Quick score bump buttons -->
+            <div class="flex flex-col gap-1">
+              <button onclick="quickUpdateScore('${liveMatch.id}', 1, 1)" class="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center transition border border-slate-700" title="Add 1">+1</button>
+              <button onclick="quickUpdateScore('${liveMatch.id}', 1, 4)" class="w-7 h-7 rounded bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 text-xs font-bold flex items-center justify-center transition border border-blue-500/40" title="Add 4">+4</button>
+            </div>
+          </div>
+
+          <!-- VS Divider -->
+          <div class="md:col-span-1 flex flex-col items-center justify-center text-center">
+            <span class="font-nautical text-slate-500 font-extrabold text-lg">VS</span>
+            <span class="text-[10px] text-amber-500/80 font-bold uppercase tracking-wider">Round Robin</span>
+          </div>
+
+          <!-- Team 2 Side -->
+          <div class="md:col-span-3 flex items-center justify-between gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+            <!-- Quick score bump buttons -->
+            <div class="flex flex-col gap-1 order-last md:order-first">
+              <button onclick="quickUpdateScore('${liveMatch.id}', 2, 1)" class="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center transition border border-slate-700" title="Add 1">+1</button>
+              <button onclick="quickUpdateScore('${liveMatch.id}', 2, 4)" class="w-7 h-7 rounded bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 text-xs font-bold flex items-center justify-center transition border border-amber-500/40" title="Add 4">+4</button>
+            </div>
+            <div class="text-right flex-1">
+              <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">${h2.tagline}</span>
+              <h3 class="text-lg sm:text-xl font-nautical font-bold ${h2.textColor}">${liveMatch.team2.toUpperCase()}</h3>
+              <p class="text-xl sm:text-2xl font-mono font-extrabold text-white tracking-tight mt-0.5">${liveMatch.score2}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold font-nautical text-lg shadow-md" style="background-color: ${h2.bgSolid};">
+              ${liveMatch.team2[0]}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Commentary and Live Admin Control Trigger -->
+        <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2 text-slate-300">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+            <span class="italic text-slate-300">${liveMatch.summary || 'Match proceeding according to official nautical sports regulations.'}</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="openAdminModal('${liveMatch.id}')" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center gap-1.5 transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+              <span>Edit Live Score</span>
+            </button>
+            <button onclick="markMatchCompleted('${liveMatch.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 font-semibold flex items-center gap-1 transition">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+              <span>Mark Complete</span>
+            </button>
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    function renderMatchesGrid() {
+      const grid = document.getElementById('matches-grid');
+      grid.innerHTML = '';
+
+      let filtered = matches.filter(m => {
+        const matchesStatus = currentStatusFilter === 'all' || m.status === currentStatusFilter;
+        const matchesSport = currentSportFilter === 'all' || m.sport.toLowerCase() === currentSportFilter.toLowerCase();
+        return matchesStatus && matchesSport;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 rounded-xl border border-dashed border-slate-800 bg-slate-900/30 text-slate-400 text-sm">
+            <i data-lucide="compass" class="w-10 h-10 text-slate-600 mx-auto mb-2"></i>
+            No matches found matching the selected filters.
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(m => {
+        const h1 = HOUSES[m.team1] || HOUSES['Main'];
+        const h2 = HOUSES[m.team2] || HOUSES['Mizzen'];
+
+        const statusBadge = m.status === 'live' 
+          ? `<span class="bg-red-500/20 text-red-400 border border-red-500/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>Live</span>`
+          : m.status === 'completed'
+          ? `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Finished</span>`
+          : `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Upcoming</span>`;
+
+        const card = document.createElement('div');
+        card.className = "rounded-xl border border-slate-800 bg-[#091322]/90 hover:border-slate-700 p-4 transition-all hover:shadow-xl flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <!-- Header bar of card -->
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                <i data-lucide="shield" class="w-3.5 h-3.5 text-amber-500"></i>
+                ${m.sport}
+              </span>
+              ${statusBadge}
+            </div>
+
+            <!-- Teams & Scores -->
+            <div class="space-y-2 py-1">
+              <div class="flex items-center justify-between bg-slate-900/70 p-2 rounded-lg border border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${h1.bgSolid};"></span>
+                  <span class="font-nautical font-bold text-xs uppercase ${h1.textColor}">${m.team1}</span>
+                </div>
+                <span class="font-mono font-bold text-sm text-slate-100">${m.score1 || '-'}</span>
+              </div>
+
+              <div class="flex items-center justify-between bg-slate-900/70 p-2 rounded-lg border border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${h2.bgSolid};"></span>
+                  <span class="font-nautical font-bold text-xs uppercase ${h2.textColor}">${m.team2}</span>
+                </div>
+                <span class="font-mono font-bold text-sm text-slate-100">${m.score2 || '-'}</span>
+              </div>
+            </div>
+
+            <!-- Venue & Summary Details -->
+            <div class="mt-3 text-[11px] text-slate-400 space-y-1">
+              <div class="flex items-center gap-1 text-slate-400">
+                <i data-lucide="map-pin" class="w-3 h-3 text-slate-500"></i>
+                <span class="truncate">${m.venue}</span>
+              </div>
+              <div class="text-slate-500 italic text-[11px] truncate">
+                ${m.summary || m.time}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Card Buttons -->
+          <div class="mt-4 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2">
+            <span class="text-[10px] text-slate-500 font-medium">${m.time}</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="openAdminModal('${m.id}')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1">
+                <i data-lucide="edit-2" class="w-3 h-3 text-amber-400"></i>
+                <span>Edit</span>
+              </button>
+              <button onclick="deleteMatch('${m.id}')" class="p-1 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition" title="Delete Match">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function setScheduleStatusFilter(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-status-btn').forEach(b => {
+        b.className = "filter-status-btn px-3 py-1 rounded text-xs font-semibold text-slate-300 hover:text-white transition";
+      });
+      const activeBtn = document.getElementById(`filter-status-${status}`);
+      if (activeBtn) {
+        activeBtn.className = "filter-status-btn px-3 py-1 rounded text-xs font-semibold bg-amber-500 text-slate-950 transition";
+      }
+      renderMatchesGrid();
+    }
+
+    function setSportFilter(sport) {
+      currentSportFilter = sport;
+      renderMatchesGrid();
+    }
+
+    function quickUpdateScore(matchId, teamNum, increment) {
+      const match = matches.find(m => m.id === matchId);
+      if (!match) return;
+
+      const scoreField = teamNum === 1 ? 'score1' : 'score2';
+      let currentVal = parseInt(match[scoreField], 10);
+      if (isNaN(currentVal)) {
+        // Parse leading digits for cricket or sets
+        const extracted = (match[scoreField] || '').match(/\d+/);
+        currentVal = extracted ? parseInt(extracted[0], 10) : 0;
+      }
+
+      currentVal += increment;
+      match[scoreField] = currentVal.toString();
+      saveData();
+      showToast(`Score updated for ${teamNum === 1 ? match.team1 : match.team2}: +${increment}`);
+      renderAll();
+    }
+
+    function markMatchCompleted(matchId) {
+      const match = matches.find(m => m.id === matchId);
+      if (match) {
+        match.status = 'completed';
+        match.isFlagship = false;
+        saveData();
+        showToast(`${match.sport} match marked as completed.`);
+        renderAll();
+      }
+    }
+
+    function deleteMatch(matchId) {
+      matches = matches.filter(m => m.id !== matchId);
+      saveData();
+      showToast('Match removed from schedule.');
+      renderAll();
+    }
+
+    function openAdminModal(matchId = null) {
+      const form = document.getElementById('match-form');
+      form.reset();
+
+      if (matchId) {
+        const m = matches.find(x => x.id === matchId);
+        if (m) {
+          document.getElementById('modal-title').textContent = "Update Match Score / Details";
+          document.getElementById('form-match-id').value = m.id;
+          document.getElementById('form-sport').value = m.sport;
+          document.getElementById('form-status').value = m.status;
+          document.getElementById('form-venue').value = m.venue;
+          document.getElementById('form-time').value = m.time;
+          document.getElementById('form-team1').value = m.team1;
+          document.getElementById('form-team2').value = m.team2;
+          document.getElementById('form-score1').value = m.score1 || '';
+          document.getElementById('form-score2').value = m.score2 || '';
+          document.getElementById('form-summary').value = m.summary || '';
+        }
+      } else {
+        document.getElementById('modal-title').textContent = "Schedule New Collegiate Match";
+        document.getElementById('form-match-id').value = "";
+        document.getElementById('form-status').value = "scheduled";
+      }
+
+      document.getElementById('admin-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').classList.add('hidden');
+    }
+
+    function handleSaveMatch(e) {
+      e.preventDefault();
+      const id = document.getElementById('form-match-id').value;
+      const sport = document.getElementById('form-sport').value;
+      const status = document.getElementById('form-status').value;
+      const venue = document.getElementById('form-venue').value;
+      const time = document.getElementById('form-time').value;
+      const team1 = document.getElementById('form-team1').value;
+      const team2 = document.getElementById('form-team2').value;
+      const score1 = document.getElementById('form-score1').value;
+      const score2 = document.getElementById('form-score2').value;
+      const summary = document.getElementById('form-summary').value;
+
+      if (team1 === team2) {
+        showToast("Teams must be different houses!");
+        return;
+      }
+
+      if (id) {
+        // Edit existing match
+        const index = matches.findIndex(m => m.id === id);
+        if (index !== -1) {
+          matches[index] = {
+            ...matches[index],
+            sport,
+            status,
+            venue,
+            time,
+            team1,
+            team2,
+            score1,
+            score2,
+            summary
+          };
+        }
+      } else {
+        // Create new match
+        const newMatch = {
+          id: 'm_' + Date.now(),
+          sport,
+          status,
+          venue,
+          time,
+          team1,
+          team2,
+          score1: score1 || '0',
+          score2: score2 || '0',
+          summary,
+          isFlagship: status === 'live'
+        };
+        matches.unshift(newMatch);
+      }
+
+      saveData();
+      closeAdminModal();
+      showToast("Match details recorded and leaderboard refreshed!");
+      renderAll();
+    }
+
+    function saveData() {
+      localStorage.setItem('nautical_sports_matches', JSON.stringify(matches));
+      localStorage.setItem('nautical_sports_medals', JSON.stringify(medals));
+    }
+
+    function resetTournamentData() {
+      matches = [...initialMatches];
+      medals = { ...defaultMedals };
+      saveData();
+      showToast("Tournament reset to standard tournament schedule!");
+      renderAll();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toast-msg');
+      msg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3200);
+    }
+
+    // Master render caller
+    function renderAll() {
+      renderStandings();
+      renderMedalTally();
+      renderLiveCard();
+      renderMatchesGrid();
+    }
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
